@@ -5,7 +5,12 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
 
-from signals import signal_1_llm_attribution
+from signals import (
+    signal_1_llm_attribution,
+    signal_2_stylometry,
+    combine_signal_scores,
+    classify_score,
+)
 from auditor import log_event, read_log, get_entry, update_appeal, init_db
 
 load_dotenv()
@@ -52,22 +57,22 @@ def submit():
     # Run first signal (LLM attribution)
     signal_result = signal_1_llm_attribution(text)
     llm_score = signal_result["llm_score"]
-    
-    # For now, use LLM score directly as confidence; in Milestone 4 we'll combine with stylometry
-    # Map llm_score to classification and displayed confidence
-    if llm_score >= 0.65:
-        classification = "likely_ai"
-        displayed_confidence = llm_score
+
+    # Run second signal (stylometry heuristics)
+    stylometry_result = signal_2_stylometry(text)
+    stylometry_score = stylometry_result["stylometry_score"]
+
+    # Combine both signals into a single AI-likelihood score and classification
+    combined_score = combine_signal_scores(llm_score, stylometry_score)
+    classification, displayed_confidence = classify_score(combined_score)
+
+    if classification == "likely_ai":
         label = f"Likely AI-generated content. Multiple signals indicate this text was produced primarily by an AI system. Confidence: {int(displayed_confidence * 100)}%."
-    elif llm_score <= 0.35:
-        classification = "likely_human"
-        displayed_confidence = 1 - llm_score
+    elif classification == "likely_human":
         label = f"Likely human-written content. Multiple signals indicate this text was written by a human author. Confidence: {int(displayed_confidence * 100)}%."
     else:
-        classification = "uncertain"
-        displayed_confidence = max(llm_score, 1 - llm_score)
         label = f"Attribution uncertain. The available signals do not provide enough agreement to confidently determine whether this content was AI-generated or human-written. Confidence: {int(displayed_confidence * 100)}%."
-    
+
     # Log to audit log
     log_event({
         "content_id": content_id,
@@ -75,7 +80,7 @@ def submit():
         "attribution": classification,
         "confidence": displayed_confidence,
         "llm_score": llm_score,
-        "stylometry_score": None,  # Will be filled in Milestone 4
+        "stylometry_score": stylometry_score,
         "status": "classified"
     })
     
