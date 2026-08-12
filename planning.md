@@ -265,23 +265,3 @@ POST /appeal
  API Response Returned
         │ content_id, status, message
 ```
-
----
-
-## AI Tool Plan
-
-### Milestone 3 — Submission endpoint + first signal
-- Provide: the `Detection Signals` section and the `Architecture` diagram.
-- Ask for: a Flask app skeleton with `POST /submit` and a first signal function that returns the LLM-based score and normalized `llm_score` output.
-- Verify by: testing the first signal function directly with a few example inputs, then confirming `POST /submit` returns `content_id`, `attribution`, provisional `confidence`, and `label`.
-
-### Milestone 4 — Second signal + confidence scoring
-- Provide: the `Detection Signals` section, the `Representing uncertainty` section, and the `Architecture` diagram.
-- Ask for: a second stylometric signal function plus scoring logic that combines `llm_score` and `stylometry_score` into one calibrated `confidence` and classification.
-- Verify by: checking that the combined score differs for clearly AI-like versus clearly human-like text and that the audit log records both individual signal scores.
-
-### Milestone 5 — Production layer
-- Provide: the `Transparency Labels` section, the `Appeals Workflow` section, and the `Architecture` diagram.
-- Ask for: label generation logic that returns the exact three written label variants based on the confidence thresholds, plus the `POST /appeal` endpoint that updates status and logs appeal reasoning.
-- Verify by: ensuring all three label variants can be produced from different inputs and confirming that submitting an appeal sets status to `under_review` and stores `appeal_reasoning` in the audit log.
-

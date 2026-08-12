@@ -191,15 +191,3 @@ The two limits work together: the per-minute cap stops bursts, and the per-day c
 The financial-policy example in the [Low-Confidence Example](#low-confidence-example) above is exactly this case: genuinely human text landing at `p_ai = 0.63`. Our dead-zone catches it as `uncertain` rather than a confident false positive, but a slightly more polished passage would clear the `0.65` bar and be mislabeled `likely_ai`. The mitigation is structural (the `uncertain` band and the appeals workflow). The signals cannot distinguish disciplined human craft from machine fluency, because fluency is the only thing they know how to measure.
 
 The symmetric failure also holds: **casual, error-laden AI output** (text prompted to be sloppy, with typos and slang) reads as human, because the same features score deliberate messiness as authenticity.
-
-
-## Spec Reflection
-
-- The spec helped by providing a clear outline for all the components that needed to go into the multi-detection signal pipeline. Everything from that and the confidence scoring section was down to the formula, which was an excellent artifact to use when prompting.
-- The implementation diverged because I ended up modifying some of the stylometric heuristic measurements for the second detection signal. I replaced the measures that went into the discourse repetition score after realizing it was a little too strict. I also changed the weight of each feature to be a little more balanced as the heuristics that looked promising were not reliable enough to contribute to 60% of the stylometry score.
-
-## AI Usage
-
-1. **Milestone 3 — LLM attribution signal.** I directed the AI to implement Signal 1 from the spec: call the Groq Llama 3.3 70B model, prompt it to assess authorship, and return the forced JSON (`label`, `confidence`, `reasoning`) normalized to the shared `llm_score` scale. It produced working code that matched the spec's behavior. **What I revised:** the generated version packed all of the instructions into a single user-prompt block. I split it into a proper system prompt (the persistent role and scoring rubric) and a user prompt (just the submitted text), so the instructions stay stable and the model treats the content as data to analyze rather than as part of its instructions.
-
-2. **Milestone 4 — stylometric heuristics.** I directed the AI to implement Signal 2's five stylometric features and the weighting from the spec. It produced the measurements as written. **What I overrode:** while testing against sample text I found the discourse-repetition feature was too strict and rarely fired, so I replaced the measures feeding it (loosening from the original definition to repeated sentence-prefixes + repeated bi-grams, with the threshold widened to `0.35`). I also rebalanced the feature weights away from the spec's draft (see [Spec Reflection](#spec-reflection)).
