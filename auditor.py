@@ -30,7 +30,7 @@ def log_event(entry):
                        :llm_score, :stylometry_score, :status, :appeal_reasoning, :appeal_timestamp)""",
             {
                 **entry,
-                "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "llm_score": entry.get("llm_score"),
                 "stylometry_score": entry.get("stylometry_score"),
                 "appeal_reasoning": None,
@@ -45,7 +45,7 @@ def update_appeal(content_id, appeal_reasoning):
             """UPDATE audit_log 
                SET status = 'under_review', appeal_reasoning = ?, appeal_timestamp = ?
                WHERE content_id = ?""",
-            (appeal_reasoning, datetime.now(timezone.utc).isoformat() + "Z", content_id)
+            (appeal_reasoning, datetime.now(timezone.utc).isoformat(), content_id)
         )
 
 def read_log(limit=20):
